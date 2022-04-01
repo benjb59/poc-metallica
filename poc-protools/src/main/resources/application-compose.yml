@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/postgres?currentSchema=protools
+    driverClassName: org.postgresql.Driver
+    username: postgres
+    password: secret
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+    hibernate.ddl-auto: update

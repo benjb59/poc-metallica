@@ -1,0 +1,49 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  password-generator:
+    build: ./poc-password-generator
+    environment:
+      - JAVA_OPTS=-Dspring.profiles.active=compose
+      - DATA_FOLDER=/data/password-generator
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./runtime/password-generator:/data
+    links:
+      - "db"
+  password-mail-sender:
+    build: ./poc-password-mail-sender
+    environment:
+      - JAVA_OPTS=-Dspring.profiles.active=compose
+      - DATA_FOLDER=/data
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./runtime/password-mail-sender:/data
+    links:
+      - "db"
+  protools:
+    build: ./poc-protools
+    environment:
+      - JAVA_OPTS=-Dspring.profiles.active=compose
+      - DATA_FOLDER=/data
+      - PASSWORD_GENERATOR=http://password-generator:8080
+      - PASSWORD_MAIL_SENDER=http://password-mail-sender:8080
+    ports:
+      - "8083:8080"
+    volumes:
+      - ./runtime/protools:/data
+    links:
+      - "db"
+      - "password-generator"
+      - "password-mail-sender"
+  db:
+    image: postgres:12-alpine
+    environment:
+      - POSTGRES_PASSWORD=secret
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "25432:5432"
+    volumes:
+      - ./runtime/postgres:/var/lib/postgresql/data
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
