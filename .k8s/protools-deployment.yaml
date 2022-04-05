@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: protools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: protools
+  template:
+    metadata:
+      labels:
+        app: protools
+    spec:
+      containers:
+      - name: protools
+        env:
+          - name: DATA_FOLDER
+            value: /data
+          - name: JAVA_OPTS
+            value: -Dspring.profiles.active=compose
+          - name: PASSWORD_GENERATOR
+            value: http://password-generator:8080
+          - name: PASSWORD_MAIL_SENDER
+            value: http://password-mail-sender:8080
+        image: ${DOCKER_REPO}/poc-protools
+        ports:
+          - containerPort: 8080
+        resources: {}
+        volumeMounts:
+          - mountPath: /data
+            name: protools-claim0
+      restartPolicy: Always
+      volumes:
+        - name: protools-claim0
+          persistentVolumeClaim:
+            claimName: protools-claim0
