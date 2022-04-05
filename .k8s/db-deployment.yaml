@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - name: db
+        env:
+          - name: PGDATA
+            value: /var/lib/postgresql/data/pgdata
+          - name: POSTGRES_PASSWORD
+            value: secret
+        image: postgres:12-alpine
+        ports:
+          - containerPort: 5432
+        resources: {}
+        volumeMounts:
+          - mountPath: /var/lib/postgresql/data
+            name: db-claim0
+          - mountPath: /docker-entrypoint-initdb.d
+            name: db-claim1
+      initContainers:
+      - name: init-db
+        image: busybox:latest
+        command: ['sh', '-c', "wget --output-document /docker-entrypoint-initdb.d/init.sh https://raw.githubusercontent.com/JeanHaderer/poc-metallica/master/docker-entrypoint-initdb.d/init-db.sh"]
+        volumeMounts:
+          - mountPath: /docker-entrypoint-initdb.d
+            name: db-claim1
+      restartPolicy: Always
+      volumes:
+        - name: db-claim0
+          persistentVolumeClaim:
+            claimName: db-claim0
+        - name: db-claim1
+          emptyDir: {}
