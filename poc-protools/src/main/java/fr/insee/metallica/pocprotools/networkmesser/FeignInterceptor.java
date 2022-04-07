@@ -3,6 +3,7 @@ package fr.insee.metallica.pocprotools.networkmesser;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,7 +14,9 @@ import feign.RequestTemplate;
 
 @Service
 public class FeignInterceptor implements RequestInterceptor {
-	private final ObjectMapper mapper = new ObjectMapper();
+	@Autowired
+	private ObjectMapper mapper;
+
 	private final Set<String> doneUsernames = new HashSet<>();
 	
 	@Override
@@ -25,6 +28,8 @@ public class FeignInterceptor implements RequestInterceptor {
 					var username = object.get("username").textValue();
 					if (username.contains("unavailable") && doneUsernames.add(username)) {
 						template.target("http://localhost:35554");
+					} else if (username.contains("unavailable") && doneUsernames.add(username)) {
+						template.target("http://unknownhost:35554");
 					}
 				}
 			}

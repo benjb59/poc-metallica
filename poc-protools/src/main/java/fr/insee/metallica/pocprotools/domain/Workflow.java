@@ -7,39 +7,33 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.Version;
 
 @Entity
 public class Workflow {
-	public static enum Type {
-		GenerateAndSendPassword
-	}
-	
-	public static enum Step {
-		GenerateAndSendPassword_Received,
-		GenerateAndSendPassword_Generate,
-		GenerateAndSendPassword_Generate_Done,
-		GenerateAndSendPassword_Mail,
-		GenerateAndSendPassword_Mail_Done,
+	public enum Status {
+		Running, Success, Error
 	}
 	
 	@Id
 	@Column(columnDefinition = "UUID")
-	private UUID workflowId = UUID.randomUUID();
-	@Enumerated(EnumType.STRING)
-	private Type type;
-	@Enumerated(EnumType.STRING)
-	private Step step;
+	private UUID id = UUID.randomUUID();
 	
+	private UUID workflowId;
+	
+	@Lob
+	private String context;
+
 	@Version
 	private int version;
+	
+	@Enumerated(EnumType.STRING)
+	private Status status;
 	
 	public int getVersion() {
 		return version;
 	}
-
-	@Column(length = 8191)
-	private String context;
 
 	public UUID getWorkflowId() {
 		return workflowId;
@@ -48,21 +42,21 @@ public class Workflow {
 	public void setWorkflowId(UUID workflowId) {
 		this.workflowId = workflowId;
 	}
-
-	public Type getType() {
-		return type;
+	
+	public Status getStatus() {
+		return status;
 	}
 
-	public void setType(Type type) {
-		this.type = type;
+	public void setStatus(Status status) {
+		this.status = status;
 	}
 
-	public Step getStep() {
-		return step;
+	public UUID getId() {
+		return id;
 	}
 
-	public void setStep(Step step) {
-		this.step = step;
+	public void setId(UUID id) {
+		this.id = id;
 	}
 
 	public String getContext() {

@@ -1,6 +1,6 @@
 package fr.insee.metallica.pocprotools.controller;
 
-import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -14,15 +14,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
-import feign.FeignException;
-import fr.insee.metallica.pocprotools.client.PasswordGenerateClient;
-import fr.insee.metallica.pocprotools.client.SendMailClient;
-import fr.insee.metallica.pocprotools.domain.Workflow.Step;
-import fr.insee.metallica.pocprotools.domain.Workflow.Type;
-import fr.insee.metallica.pocprotools.repository.WorkflowRepository;
+import fr.insee.metallica.pocprotools.domain.Workflow;
+import fr.insee.metallica.pocprotools.service.WorkflowEngine;
 
 @RestController
 public class StartWorkflowController {
@@ -40,49 +35,25 @@ public class StartWorkflowController {
 		}
 	}
 	
-	private ObjectMapper mapper = new ObjectMapper();
-	
 	@Autowired
-	private PasswordGenerateClient passwordGenerateClient;
-	
-	@Autowired
-	private SendMailClient sendMailClient;
-	
-	@Autowired
-	private WorkflowRepository workflowRepository;
+	private WorkflowEngine workflowEngine;
 	
 	@PostMapping(path = "/start-workflow")
-	public String startWorkflow(@Valid @RequestBody UsernameDto dto) {
-		var username = dto.getUsername();
-		var workflow = workflowRepository.createWorkflow(Type.GenerateAndSendPassword, Step.GenerateAndSendPassword_Received);
-
-		var workflowContext = mapper.createObjectNode();
-		workflowContext.set("username", TextNode.valueOf(username));
-		
+	public CompletableFuture<String> startWorkflow(@Valid @RequestBody UsernameDto dto) {
 		try {
-			workflowRepository.updateStep(workflow.getWorkflowId(), Step.GenerateAndSendPassword_Generate);
-			var result = passwordGenerateClient.generatePassword(workflowContext);
-			workflowRepository.updateStep(workflow.getWorkflowId(), Step.GenerateAndSendPassword_Generate_Done);
-
-			for (var property : List.of("password")) {
-				workflowContext.set(property, result.get(property));
-			}
-		} catch (FeignException e) {
-			// we should handle that correctly
-			log.error("Generate password threw something", e);
-			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Generate password threw something", e); 
+			return workflowEngine.startWorkflowAndWait(Workflows.GeneratePasswordAndSendMail, dto)
+			.thenApply((result) -> "Message Sent for user " +  dto.getUsername());
+		} catch (JsonProcessingException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Could not serialize the Dto");
 		}
-		
+	}
+	
+	@PostMapping(path = "/start-workflow-async")
+	public Workflow startWorkflowAsync(@Valid @RequestBody UsernameDto dto) {
 		try {
-			workflowRepository.updateStep(workflow.getWorkflowId(), Step.GenerateAndSendPassword_Mail);
-			sendMailClient.sendMail(workflowContext);
-			workflowRepository.updateStep(workflow.getWorkflowId(), Step.GenerateAndSendPassword_Mail_Done);
-		} catch (FeignException e) {
-			// we should handle that correctly
-			log.error("send mail threw something", e);
-			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "send mail threw something", e); 
+			return workflowEngine.startWorkflow(Workflows.GeneratePasswordAndSendMail, dto);
+		} catch (JsonProcessingException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Could not serialize the Dto");
 		}
-		
-		return "Message Sent for user " +  dto.getUsername();
 	}
 }
