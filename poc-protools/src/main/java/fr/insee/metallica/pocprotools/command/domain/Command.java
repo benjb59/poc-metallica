@@ -8,8 +8,8 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Id;
-import javax.persistence.Lob;
 
+import org.hibernate.annotations.Type;
 import org.springframework.data.annotation.LastModifiedDate;
 
 @Entity
@@ -36,13 +36,13 @@ public class Command {
 	@Enumerated(EnumType.STRING)
 	private Status status;
 
-	@Lob
+	@Type(type = "text")
 	private String context;
 	
-	@Lob
+	@Type(type = "text")
 	private String payload;
 	
-	@Lob
+	@Type(type = "text")
 	private String result;
 	
 	public UUID getId() {

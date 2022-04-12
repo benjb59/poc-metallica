@@ -24,6 +24,9 @@ class IntegrationToMakeWorkTests {
 		protoolsClient.startWorkflow(dto);
 
 		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
+		// check for duplicate
+		Thread.sleep(10000);
+		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
 	}
 
 	@Test
@@ -32,6 +35,9 @@ class IntegrationToMakeWorkTests {
 		dto.setUsername("timeout-transaction-" + RandomStringUtils.randomAlphabetic(10));
 		protoolsClient.startWorkflow(dto);
 
+		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
+		// check for duplicate
+		Thread.sleep(10000);
 		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
 	}
 
@@ -42,6 +48,9 @@ class IntegrationToMakeWorkTests {
 		protoolsClient.startWorkflow(dto);
 
 		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
+		// check for duplicate
+		Thread.sleep(10000);
+		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
 	}
 
 	@Test
@@ -50,6 +59,9 @@ class IntegrationToMakeWorkTests {
 		dto.setUsername("unavailable-" + RandomStringUtils.randomAlphabetic(10));
 		protoolsClient.startWorkflow(dto);
 
+		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
+		// check for duplicate
+		Thread.sleep(10000);
 		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
 	}
 	
@@ -60,20 +72,26 @@ class IntegrationToMakeWorkTests {
 		protoolsClient.startWorkflow(dto);
 
 		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
+		// check for duplicate
+		Thread.sleep(10000);
+		integrationTestHelper.waitForUserInMail(10, dto.getUsername());
 	}
 	
 	@Test
 	void testCharge() throws Throwable {
 		var users = new HashSet<String>();
-		for (int i = 0 ; i < 100; i++) {
+		for (int i = 0 ; i < 1000; i++) {
 			var dto = new StartWorkflowController.UsernameDto();
 			dto.setUsername("charge-" + RandomStringUtils.randomAlphabetic(10));
 			users.add(dto.getUsername());
 			new Thread(() -> protoolsClient.startWorkflowAsync(dto)).start();
 			
 			if (i % 10 == 0)
-				Thread.sleep(1000);
+				Thread.sleep(10);
 		}
+		integrationTestHelper.waitForUsersInMail(50, users);
+		// check for duplicate
+		Thread.sleep(10000);
 		integrationTestHelper.waitForUsersInMail(10, users);
 	}
 }

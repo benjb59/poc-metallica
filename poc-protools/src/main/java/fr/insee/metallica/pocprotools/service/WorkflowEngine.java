@@ -2,6 +2,7 @@ package fr.insee.metallica.pocprotools.service;
 
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 import javax.annotation.PostConstruct;
 import javax.transaction.Transactional;
@@ -10,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -95,11 +98,12 @@ public class WorkflowEngine {
 	}
 	
 	@Transactional
-	public Workflow startWorkflow(WorkflowDescriptor descriptor, Object context) throws JsonProcessingException {
+	@Async
+	public Future<Workflow> startWorkflow(WorkflowDescriptor descriptor, Object context) throws JsonProcessingException {
 		var workflow = workflowService.createWorkflow(descriptor, context);
 		var step = workflowService.createStep(workflow, descriptor.getInitialStep());
 		startStep(step);
-		return workflow;
+		return new AsyncResult<>(workflow);
 	}
 	
 	public void startStep(WorkflowStep step) throws JsonProcessingException {

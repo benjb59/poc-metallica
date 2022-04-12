@@ -1,6 +1,7 @@
 package fr.insee.metallica.pocprotools.controller;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -49,7 +50,7 @@ public class StartWorkflowController {
 	}
 	
 	@PostMapping(path = "/start-workflow-async")
-	public Workflow startWorkflowAsync(@Valid @RequestBody UsernameDto dto) {
+	public Future<Workflow> startWorkflowAsync(@Valid @RequestBody UsernameDto dto) {
 		try {
 			return workflowEngine.startWorkflow(Workflows.GeneratePasswordAndSendMail, dto);
 		} catch (JsonProcessingException e) {

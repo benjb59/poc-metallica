@@ -1,6 +1,7 @@
 package fr.insee.metallica.pocpasswordgenerator.controller;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
@@ -16,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import fr.insee.metallica.pocpasswordgenerator.domain.PasswordHash;
 import fr.insee.metallica.pocpasswordgenerator.networkmesser.NetworkMesser;
+import fr.insee.metallica.pocpasswordgenerator.outbox.aspect.TransactionalCommand;
 import fr.insee.metallica.pocpasswordgenerator.service.PasswordHashService;
 
 @RestController
@@ -64,8 +66,30 @@ public class PasswordController {
 		return password;
 	}
 	
+	@PostMapping(path = "/generate-password-with-command")
+	@NetworkMesser("controller")
+	@TransactionalCommand
+	public PasswordDto generatePasswordWithCommand(@RequestBody @Valid UsernameDto dto) throws InterruptedException {
+		var username = dto.getUsername();
+		
+		var password = new PasswordDto(); 
+		password.setPassword(RandomStringUtils.randomAlphanumeric(25));
+		try {
+			passwordHashService.hashAndSave(username, password.getPassword());
+		} catch (DataIntegrityViolationException e) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username already exists");
+		}
+	
+		return password;
+	}
+	
 	@PostMapping(path = "/all")
 	public List<PasswordHash> getAll() {
 		return passwordHashService.findAll();
+	}
+	
+	@PostMapping(path = "/test-future")
+	public CompletableFuture<String> testFuture() {
+		return new CompletableFuture<String>();
 	}
 }
