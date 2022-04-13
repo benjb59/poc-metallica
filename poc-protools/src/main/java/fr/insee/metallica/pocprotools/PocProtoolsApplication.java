@@ -6,11 +6,9 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import fr.insee.metallica.pocprotools.repository.WorkflowRepository;
-
 @SpringBootApplication
 @EnableFeignClients
-@EnableJpaRepositories(basePackageClasses = WorkflowRepository.class)
+@EnableJpaRepositories
 @EnableTransactionManagement
 public class PocProtoolsApplication {
 
